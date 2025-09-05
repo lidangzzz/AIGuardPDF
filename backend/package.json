@@ -1,0 +1,27 @@
+{
+  "name": "aiguardpdf-backend",
+  "version": "1.0.0",
+  "main": "server.ts",
+  "type": "commonjs",
+  "scripts": {
+    "start": "npx ts-node server.ts",
+    "dev": "npx nodemon --exec npx ts-node server.ts",
+    "build": "npx tsc",
+    "serve": "node dist/server.js",
+    "type-check": "npx tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pdfkit": "^0.14.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "@types/pdfkit": "^0.14.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.2.2"
+  }
+}
