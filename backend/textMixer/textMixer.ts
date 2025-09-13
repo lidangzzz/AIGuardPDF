@@ -94,7 +94,7 @@ export class TextMixer {
       otherArticleChunks.push(...chunks);
     });
 
-    // Create the mixed array
+    // Create the mixed array - sequential order, no shuffling
     const mixedText: TextPiece[] = [];
     let originalIndex = 0;
     let mainArticleIndex = 0;
@@ -110,7 +110,7 @@ export class TextMixer {
         mixedText.push(originalChunks[originalIndex]);
         originalIndex++;
       } else if (rand < 0.8) {
-        // Add main article piece (50% chance)
+        // Add main article piece (50% chance) - maintain sequential order
         if (mainArticleIndex < mainArticleChunks.length) {
           mixedText.push(mainArticleChunks[mainArticleIndex]);
           mainArticleIndex++;
@@ -121,7 +121,7 @@ export class TextMixer {
           mainArticleIndex++;
         }
       } else {
-        // Add other article piece (20% chance)
+        // Add other article piece (20% chance) - maintain sequential order
         if (otherArticleChunks.length > 0) {
           if (otherArticleIndex >= otherArticleChunks.length) {
             otherArticleIndex = 0; // Restart from beginning
@@ -142,8 +142,8 @@ export class TextMixer {
       }
     }
 
-    // Shuffle the final array to make it more random
-    return this.shuffleArray(mixedText);
+    // Return without shuffling to maintain sequential order
+    return mixedText;
   }
 
   // Helper method to get statistics about the mixed text
