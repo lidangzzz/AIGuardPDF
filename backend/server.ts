@@ -2,11 +2,23 @@ import express, { Request, Response, Application } from 'express';
 import PDFKit from 'pdfkit';
 import cors from 'cors';
 import { MarkdownRenderer } from './markdownRenderer';
+import { TextMixer, TextPiece } from './textMixer/textMixer';
+import { PdfCreator } from './pdfCreator';
 
 // Types
 interface GeneratePdfRequest {
   text: string;
   mode: 'text' | 'markdown';
+}
+
+interface GenerateMixedPdfRequest {
+  originalText: string;
+  mainArticle: string;
+  otherArticles?: string[];
+  includeStatistics?: boolean;
+  includeSpecialSequences?: boolean;
+  title?: string;
+  author?: string;
 }
 
 interface PdfGenerationOptions {
@@ -171,6 +183,62 @@ app.post('/generate-pdf', async (req: Request<{}, {}, GeneratePdfRequest>, res: 
   } catch (error) {
     console.error('PDF generation error:', error);
     res.status(500).json({ error: 'Failed to generate PDF' });
+  }
+});
+
+app.post('/generate-mixed-pdf', async (req: Request<{}, {}, GenerateMixedPdfRequest>, res: Response): Promise<void> => {
+  try {
+    const {
+      originalText,
+      mainArticle,
+      otherArticles = [],
+      includeStatistics = false,
+      includeSpecialSequences = false,
+      title,
+      author
+    }: GenerateMixedPdfRequest = req.body;
+
+    // Validate input
+    if (!originalText || typeof originalText !== 'string') {
+      res.status(400).json({ error: 'Invalid originalText provided' });
+      return;
+    }
+
+    if (!mainArticle || typeof mainArticle !== 'string') {
+      res.status(400).json({ error: 'Invalid mainArticle provided' });
+      return;
+    }
+
+    if (!Array.isArray(otherArticles)) {
+      res.status(400).json({ error: 'otherArticles must be an array' });
+      return;
+    }
+
+    // Mix the texts using TextMixer
+    const mixedTextPieces: TextPiece[] = TextMixer.mixTexts({
+      originalText,
+      mainArticle,
+      otherArticles
+    });
+
+    // Generate PDF using PdfCreator
+    const pdfData: Buffer = await PdfCreator.createMixedPdf({
+      textPieces: mixedTextPieces,
+      title,
+      author,
+      includeStatistics,
+      includeSpecialSequences
+    });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="mixed-text.pdf"');
+
+    // Send PDF data
+    res.send(pdfData);
+  } catch (error) {
+    console.error('Mixed PDF generation error:', error);
+    res.status(500).json({ error: 'Failed to generate mixed PDF' });
   }
 });
 

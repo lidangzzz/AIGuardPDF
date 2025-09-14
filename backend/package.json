@@ -8,12 +8,14 @@
     "dev": "npx nodemon --exec npx ts-node server.ts",
     "build": "npx tsc",
     "serve": "node dist/server.js",
-    "type-check": "npx tsc --noEmit"
+    "type-check": "npx tsc --noEmit",
+    "test:pdfcreator": "npx ts-node testPdfCreatorCli.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "markdown-it": "^14.1.0",
+    "node-fetch": "^3.3.2",
     "pdfkit": "^0.14.0"
   },
   "devDependencies": {
