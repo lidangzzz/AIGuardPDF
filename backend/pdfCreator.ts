@@ -62,8 +62,20 @@ export class PdfCreator {
             doc.fillColor('black').opacity(1.0).fontSize(10);
           }
 
-          // Add the text piece
-          doc.text(piece.text, { continued: true });
+          // Clean up text based on visibility
+          let processedText = piece.text;
+
+          if (piece.label === 'invisible') {
+            // For invisible text (articles), remove unnecessary newlines and normalize whitespace
+            processedText = piece.text
+              .replace(/\n+/g, ' ')  // Replace multiple newlines with single space
+              .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
+              .trim();  // Remove leading/trailing whitespace
+          }
+          // For visible text (original), keep newlines as they are
+
+          // Add the processed text piece
+          doc.text(processedText, { continued: true });
         });
 
         // Reset formatting at the end
@@ -127,8 +139,20 @@ export class PdfCreator {
             doc.fillColor('black').opacity(1.0).fontSize(10);
           }
 
+          // Clean up text based on visibility
+          let processedText = piece.text;
+
+          if (piece.label === 'invisible') {
+            // For invisible text (articles), remove unnecessary newlines and normalize whitespace
+            processedText = piece.text
+              .replace(/\n+/g, ' ')  // Replace multiple newlines with single space
+              .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
+              .trim();  // Remove leading/trailing whitespace
+          }
+          // For visible text (original), keep newlines as they are
+
           // Add the text piece
-          doc.text(piece.text, { continued: true });
+          doc.text(processedText, { continued: true });
         });
 
         // Reset formatting
