@@ -52,16 +52,11 @@ export class PdfCreator {
         const bestFont = this.getBestFontForText(allText);
         doc.font(bestFont);
 
-        // Process each text piece sequentially
-        options.textPieces.forEach((piece, index) => {
-          if (piece.label === 'invisible') {
-            // Hidden text: white color, very low opacity, tiny font
-            doc.fillColor('white').opacity(0.01).fontSize(0.1);
-          } else {
-            // Visible text: black color, full opacity, normal font size
-            doc.fillColor('black').opacity(1.0).fontSize(10);
-          }
+        // Process each text piece sequentially with precise positioning
+        let xPosition: number = doc.x;
+        let yPosition: number = doc.y;
 
+        options.textPieces.forEach((piece, index) => {
           // Clean up text based on visibility
           let processedText = piece.text;
 
@@ -74,9 +69,56 @@ export class PdfCreator {
           }
           // For visible text (original), keep newlines as they are
 
-          // Add the processed text piece
-          doc.text(processedText, { continued: true });
+          if (piece.label === 'invisible') {
+            // Hidden text: white color, very low opacity, tiny font
+            doc.fillColor('white').opacity(0.01).fontSize(0.1);
+            
+            // Add hidden text character by character at precise positions
+            for (let i = 0; i < processedText.length; i++) {
+              const char = processedText[i];
+              if (char === '\n') {
+                // Handle newlines for visible text
+                yPosition += doc.currentLineHeight();
+                xPosition = doc.page.margins.left;
+              } else {
+                doc.text(char, xPosition, yPosition, { lineBreak: false });
+                //xPosition += doc.widthOfString(char);
+                
+                // Check if we need to wrap to next line
+                if (xPosition > doc.page.width - doc.page.margins.right) {
+                  yPosition += doc.currentLineHeight();
+                  xPosition = doc.page.margins.left;
+                }
+              }
+            }
+          } else {
+            // Visible text: black color, full opacity, normal font size
+            doc.fillColor('black').opacity(1.0).fontSize(12);
+            
+            // Add visible text character by character at precise positions
+            for (let i = 0; i < processedText.length; i++) {
+              const char = processedText[i];
+              if (char === '\n') {
+                // Handle newlines for visible text
+                yPosition += doc.currentLineHeight();
+                xPosition = doc.page.margins.left;
+              } else {
+                doc.text(char, xPosition, yPosition, { lineBreak: false });
+                xPosition += doc.widthOfString(char);
+                
+                // Check if we need to wrap to next line
+                if (xPosition > doc.page.width - doc.page.margins.right) {
+                  yPosition += doc.currentLineHeight();
+                  xPosition = doc.page.margins.left;
+                }
+              }
+            }
+          }
         });
+
+        // Update document cursor position
+        doc.x = xPosition;
+        doc.y = yPosition;
 
         // Reset formatting at the end
         doc.fillColor('black').opacity(1.0).fontSize(12);
@@ -129,16 +171,11 @@ export class PdfCreator {
         doc.text('Mixed Text Document', { align: 'center' });
         doc.moveDown(2);
 
-        // Process each text piece sequentially
-        options.textPieces.forEach((piece) => {
-          if (piece.label === 'invisible') {
-            // Hidden text: white color, very low opacity, tiny font
-            doc.fillColor('white').opacity(0.01).fontSize(0.1);
-          } else {
-            // Visible text: black color, full opacity, normal font size
-            doc.fillColor('black').opacity(1.0).fontSize(10);
-          }
+        // Process each text piece sequentially with precise positioning
+        let xPosition: number = doc.x;
+        let yPosition: number = doc.y;
 
+        options.textPieces.forEach((piece) => {
           // Clean up text based on visibility
           let processedText = piece.text;
 
@@ -151,82 +188,60 @@ export class PdfCreator {
           }
           // For visible text (original), keep newlines as they are
 
-          // Add the text piece
-          doc.text(processedText, { continued: true });
+          if (piece.label === 'invisible') {
+            // Hidden text: white color, very low opacity, tiny font
+            doc.fillColor('white').opacity(0.01).fontSize(0.1);
+            
+            // Add hidden text character by character at precise positions
+            for (let i = 0; i < processedText.length; i++) {
+              const char = processedText[i];
+              if (char === '\n') {
+                // Handle newlines for visible text
+                yPosition += doc.currentLineHeight();
+                xPosition = doc.page.margins.left;
+              } else {
+                doc.text(char, xPosition, yPosition, { lineBreak: false });
+                //xPosition += doc.widthOfString(char);
+                
+                // Check if we need to wrap to next line
+                if (xPosition > doc.page.width - doc.page.margins.right) {
+                  yPosition += doc.currentLineHeight();
+                  xPosition = doc.page.margins.left;
+                }
+              }
+            }
+          } else {
+            // Visible text: black color, full opacity, normal font size
+            doc.fillColor('black').opacity(1.0).fontSize(10);
+            
+            // Add visible text character by character at precise positions
+            for (let i = 0; i < processedText.length; i++) {
+              const char = processedText[i];
+              if (char === '\n') {
+                // Handle newlines for visible text
+                yPosition += doc.currentLineHeight();
+                xPosition = doc.page.margins.left;
+              } else {
+                doc.text(char, xPosition, yPosition, { lineBreak: false });
+                xPosition += doc.widthOfString(char);
+                
+                // Check if we need to wrap to next line
+                if (xPosition > doc.page.width - doc.page.margins.right) {
+                  yPosition += doc.currentLineHeight();
+                  xPosition = doc.page.margins.left;
+                }
+              }
+            }
+          }
         });
+
+        // Update document cursor position
+        doc.x = xPosition;
+        doc.y = yPosition;
 
         // Reset formatting
         doc.fillColor('black').opacity(1.0).fontSize(12);
         doc.text(''); // End the continued text
-
-        // Add statistics if requested
-        if (options.includeStatistics) {
-          doc.moveDown(2);
-          doc.fontSize(14);
-          doc.text('Document Statistics:', { underline: true });
-          doc.moveDown(1);
-
-          const visibleCount = options.textPieces.filter(p => p.label === 'visible').length;
-          const invisibleCount = options.textPieces.filter(p => p.label === 'invisible').length;
-          const totalCount = options.textPieces.length;
-
-          doc.fontSize(10);
-          doc.text(`Total text pieces: ${totalCount}`);
-          doc.text(`Visible pieces: ${visibleCount}`);
-          doc.text(`Invisible pieces: ${invisibleCount}`);
-          doc.text(`Visibility ratio: ${((visibleCount / totalCount) * 100).toFixed(2)}%`);
-        }
-
-        // Add special character sequences if requested
-        if (options.includeSpecialSequences) {
-          doc.moveDown(2);
-
-          // Add 500 red random words
-          doc.fillColor('red').fontSize(10);
-          doc.text('Special Sequences - Red Words:', { underline: true });
-          doc.moveDown(1);
-          for (let i = 0; i < 500; i++) {
-            const randomWord = this.getRandomWord(5);
-            doc.text(randomWord + ' ', { continued: true });
-          }
-          doc.text('');
-
-          // Add 2000 hidden "b" characters
-          doc.fillColor('white').opacity(0.01).fontSize(0.1);
-          for (let i = 0; i < 2000; i++) {
-            doc.text('b', { continued: true });
-          }
-          doc.text('');
-
-          // Add 500 orange random words
-          doc.fillColor('orange').opacity(1.0).fontSize(10);
-          doc.text('Special Sequences - Orange Words:', { underline: true });
-          doc.moveDown(1);
-          for (let i = 0; i < 500; i++) {
-            const randomWord = this.getRandomWord(5);
-            doc.text(randomWord + ' ', { continued: true });
-          }
-          doc.text('');
-
-          // Add 1000 indexed random words with invisible "z" characters
-          doc.fillColor('black').fontSize(12);
-          doc.moveDown(1);
-          doc.text('Special Sequences - Indexed Words:', { underline: true });
-          doc.moveDown(1);
-          for (let i = 0; i < 1000; i++) {
-            const index = i + 1;
-            const randomWord = this.getRandomWord(7);
-            doc.text(`${index}. ${randomWord} `, { continued: true });
-
-            // Add 100 invisible "z" characters
-            doc.fillColor('white').opacity(0.01).fontSize(0.1);
-            for (let j = 0; j < 100; j++) {
-              doc.text('z', { continued: true });
-            }
-            doc.fillColor('black').opacity(1.0).fontSize(12);
-          }
-          doc.text('');
-        }
 
         // Finalize the PDF
         doc.end();
