@@ -21,116 +21,6 @@ export class PdfCreator {
     return 'Helvetica'; // Default for ASCII
   }
 
-  static createPdfFromTextPieces(options: PdfCreatorOptions): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      try {
-        const doc: InstanceType<typeof PDFKit> = new PDFKit();
-        const buffers: Buffer[] = [];
-
-        // Collect PDF data chunks
-        doc.on('data', (chunk: Buffer): void => {
-          buffers.push(chunk);
-        });
-
-        // Handle PDF generation completion
-        doc.on('end', (): void => {
-          const pdfData: Buffer = Buffer.concat(buffers);
-          resolve(pdfData);
-        });
-
-        // Handle PDF generation errors
-        doc.on('error', (error: Error): void => {
-          reject(error);
-        });
-
-        // Set up document with Unicode support
-        doc.info.Title = options.title || 'Text Mixer PDF Document';
-        doc.info.Author = options.author || 'AIGuardPDF';
-
-        // Determine the best font for the entire document based on all text
-        const allText = options.textPieces.map(piece => piece.text).join('');
-        const bestFont = this.getBestFontForText(allText);
-        doc.font(bestFont);
-
-        // Process each text piece sequentially with precise positioning
-        let xPosition: number = doc.x;
-        let yPosition: number = doc.y;
-
-        options.textPieces.forEach((piece, index) => {
-          // Clean up text based on visibility
-          let processedText = piece.text;
-
-          if (piece.label === 'invisible') {
-            // For invisible text (articles), remove unnecessary newlines and normalize whitespace
-            processedText = piece.text
-              .replace(/\n+/g, ' ')  // Replace multiple newlines with single space
-              .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
-              .trim();  // Remove leading/trailing whitespace
-          }
-          // For visible text (original), keep newlines as they are
-
-          if (piece.label === 'invisible') {
-            // Hidden text: white color, very low opacity, tiny font
-            doc.fillColor('white').opacity(0.01).fontSize(0.1);
-            
-            // Add hidden text character by character at precise positions
-            for (let i = 0; i < processedText.length; i++) {
-              const char = processedText[i];
-              if (char === '\n') {
-                // Handle newlines for visible text
-                yPosition += doc.currentLineHeight();
-                xPosition = doc.page.margins.left;
-              } else {
-                doc.text(char, xPosition, yPosition, { lineBreak: false });
-                //xPosition += doc.widthOfString(char);
-                
-                // Check if we need to wrap to next line
-                if (xPosition > doc.page.width - doc.page.margins.right) {
-                  yPosition += doc.currentLineHeight();
-                  xPosition = doc.page.margins.left;
-                }
-              }
-            }
-          } else {
-            // Visible text: black color, full opacity, normal font size
-            doc.fillColor('black').opacity(1.0).fontSize(12);
-            
-            // Add visible text character by character at precise positions
-            for (let i = 0; i < processedText.length; i++) {
-              const char = processedText[i];
-              if (char === '\n') {
-                // Handle newlines for visible text
-                yPosition += doc.currentLineHeight();
-                xPosition = doc.page.margins.left;
-              } else {
-                doc.text(char, xPosition, yPosition, { lineBreak: false });
-                xPosition += doc.widthOfString(char);
-                
-                // Check if we need to wrap to next line
-                if (xPosition > doc.page.width - doc.page.margins.right) {
-                  yPosition += doc.currentLineHeight();
-                  xPosition = doc.page.margins.left;
-                }
-              }
-            }
-          }
-        });
-
-        // Update document cursor position
-        doc.x = xPosition;
-        doc.y = yPosition;
-
-        // Reset formatting at the end
-        doc.fillColor('black').opacity(1.0).fontSize(12);
-
-        // Finalize the PDF
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
   // Helper method to create PDF from mixed text with additional content
   static createMixedPdf(options: PdfCreatorOptions & {
     includeStatistics?: boolean;
@@ -167,9 +57,9 @@ export class PdfCreator {
         doc.font(bestFont);
 
         // Add title
-        doc.fontSize(16).fillColor('black').opacity(1.0);
-        doc.text('Mixed Text Document', { align: 'center' });
-        doc.moveDown(2);
+        // doc.fontSize(16).fillColor('black').opacity(1.0);
+        // doc.text('Mixed Text Document', { align: 'center' });
+        // doc.moveDown(2);
 
         // Process each text piece sequentially with precise positioning
         let xPosition: number = doc.x;
