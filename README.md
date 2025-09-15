@@ -210,7 +210,7 @@ Our work serves as both practical protection and a call to action for the AI com
 
 ## 📜 **License**
 
-This project is open source and available under the [MIT License](https://github.com/lidangzzz/AIGuardPDF). We encourage widespread adoption and contribution to strengthen collective defense against unauthorized AI content harvesting.
+This project is open source and available under the [MIT License](LICENSE). We encourage widespread adoption and contribution to strengthen collective defense against unauthorized AI content harvesting.
 
 ---
 
