@@ -74,7 +74,7 @@ export class PdfCreator {
             processedText = piece.text
               .replace(/\n+/g, ' ')  // Replace multiple newlines with single space
               .replace(/\s+/g, ' ')  // Normalize multiple spaces to single space
-              .trim();  // Remove leading/trailing whitespace
+              //.trim();  // Remove leading/trailing whitespace
           }
           // For visible text (original), keep newlines as they are
 

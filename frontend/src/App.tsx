@@ -1,67 +1,51 @@
 import { useState, useEffect } from 'react';
-
+import { sampleMainArticle, sampleOriginalArticle } from './sampleArticle';
 function App() {
   const [text, setText] = useState('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [mode, setMode] = useState<'text' | 'markdown' | 'mixed'>('text');
   const [mainArticle, setMainArticle] = useState('');
   const [otherArticles, setOtherArticles] = useState('');
   const [includeStatistics, setIncludeStatistics] = useState(false);
   const [includeSpecialSequences, setIncludeSpecialSequences] = useState(false);
 
-  // Load sample data when switching to mixed mode
+  // Load sample data on component mount
   useEffect(() => {
-    if (mode === 'mixed' && !text && !mainArticle) {
+    if (!text && !mainArticle) {
       // Auto-load sample data for demonstration
-      setText(`A hot dog is a grilled, steamed, or boiled sausage served in the slit of a partially sliced bun. The term hot dog can also refer to the sausage itself.`);
-      setMainArticle(`Artificial Intelligence has revolutionized the way we approach problem-solving in the modern era. Machine learning algorithms can now process vast amounts of data and identify patterns that would be impossible for humans to detect manually. Deep learning networks, inspired by the structure of the human brain, have achieved remarkable breakthroughs in image recognition, natural language processing, and predictive analytics.
-
-The applications of AI span across numerous industries, from healthcare and finance to transportation and entertainment. In healthcare, AI systems can analyze medical images to detect diseases earlier than traditional methods. Financial institutions use AI for fraud detection, risk assessment, and algorithmic trading.`);
+      setText(sampleOriginalArticle);
+      setMainArticle(sampleMainArticle);
       setOtherArticles(`The quantum computing revolution is approaching rapidly. Quantum computers leverage the principles of quantum mechanics to perform calculations that are exponentially faster than classical computers for certain types of problems.
 
 Climate change represents one of the most pressing challenges of our time. Rising global temperatures, extreme weather events, and biodiversity loss are reshaping our planet's ecosystem.`);
       setIncludeStatistics(true);
     }
-  }, [mode, text, mainArticle]);
+  }, [text, mainArticle]);
 
   const exportToPDF = async () => {
     try {
-      let response;
+      console.log('Sending mixed PDF request with:', {
+        originalText: text,
+        mainArticle,
+        otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
+        includeStatistics,
+        includeSpecialSequences
+      });
 
-      if (mode === 'mixed') {
-        console.log('Sending mixed PDF request with:', {
+      const response = await fetch('http://localhost:3000/generate-mixed-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           originalText: text,
           mainArticle,
           otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
           includeStatistics,
-          includeSpecialSequences
-        });
-
-        response = await fetch('http://localhost:3000/generate-mixed-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            originalText: text,
-            mainArticle,
-            otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
-            includeStatistics,
-            includeSpecialSequences,
-            title: 'Mixed Text PDF Document',
-            author: 'AIGuardPDF'
-          }),
-        });
-      } else {
-        console.log('Sending request with text:', text, 'mode:', mode);
-        response = await fetch('http://localhost:3000/generate-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text, mode }),
-        });
-      }
+          includeSpecialSequences,
+          title: 'Mixed Text PDF Document',
+          author: 'AIGuardPDF'
+        }),
+      });
 
       console.log('Response status:', response.status);
       console.log('Response ok:', response.ok);
@@ -82,7 +66,7 @@ Climate change represents one of the most pressing challenges of our time. Risin
         // Also trigger download
         const a = document.createElement('a');
         a.href = url;
-        a.download = mode === 'mixed' ? 'mixed-text.pdf' : 'text.pdf';
+        a.download = 'mixed-text.pdf';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -101,42 +85,29 @@ Climate change represents one of the most pressing challenges of our time. Risin
 
   const previewPDF = async () => {
     try {
-      let response;
+      console.log('Sending mixed PDF preview request with:', {
+        originalText: text,
+        mainArticle,
+        otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
+        includeStatistics,
+        includeSpecialSequences
+      });
 
-      if (mode === 'mixed') {
-        console.log('Sending mixed PDF preview request with:', {
+      const response = await fetch('http://localhost:3000/generate-mixed-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           originalText: text,
           mainArticle,
           otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
           includeStatistics,
-          includeSpecialSequences
-        });
-
-        response = await fetch('http://localhost:3000/generate-mixed-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            originalText: text,
-            mainArticle,
-            otherArticles: otherArticles.split('\n\n').filter(a => a.trim()),
-            includeStatistics,
-            includeSpecialSequences,
-            title: 'Mixed Text PDF Preview',
-            author: 'AIGuardPDF'
-          }),
-        });
-      } else {
-        console.log('Sending request with text:', text, 'mode:', mode);
-        response = await fetch('http://localhost:3000/generate-pdf', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text, mode }),
-        });
-      }
+          includeSpecialSequences,
+          title: 'Mixed Text PDF Preview',
+          author: 'AIGuardPDF'
+        }),
+      });
 
       console.log('Response status:', response.status);
       console.log('Response ok:', response.ok);
@@ -183,65 +154,17 @@ Climate change represents one of the most pressing challenges of our time. Risin
       }}>
         <h1 style={{ marginBottom: '20px', color: '#333' }}>Text to PDF Generator</h1>
 
-        {/* Mode Selection */}
+        {/* Mixed Text Configuration */}
         <div style={{
           marginBottom: '20px',
-          display: 'flex',
-          gap: '20px',
-          alignItems: 'center'
+          padding: '15px',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+          backgroundColor: '#f9f9f9'
         }}>
-          <label style={{ fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-            Input Mode:
-          </label>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="mode"
-                value="text"
-                checked={mode === 'text'}
-                onChange={(e) => setMode(e.target.value as 'text' | 'markdown' | 'mixed')}
-                style={{ marginRight: '8px' }}
-              />
-              Plain Text
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="mode"
-                value="markdown"
-                checked={mode === 'markdown'}
-                onChange={(e) => setMode(e.target.value as 'text' | 'markdown' | 'mixed')}
-                style={{ marginRight: '8px' }}
-              />
-              Markdown
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              <input
-                type="radio"
-                name="mode"
-                value="mixed"
-                checked={mode === 'mixed'}
-                onChange={(e) => setMode(e.target.value as 'text' | 'markdown' | 'mixed')}
-                style={{ marginRight: '8px' }}
-              />
-              Mixed Text (Hidden)
-            </label>
-          </div>
-        </div>
-
-        {/* Mixed Text Configuration */}
-        {mode === 'mixed' && (
-          <div style={{
-            marginBottom: '20px',
-            padding: '15px',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            backgroundColor: '#f9f9f9'
-          }}>
-            <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-              Text Mixing Configuration
-            </h3>
+          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
+            Text Mixing Configuration
+          </h3>
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{
@@ -302,12 +225,8 @@ Climate change represents one of the most pressing challenges of our time. Risin
             <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
               <button
                 onClick={() => {
-                  setText(`A hot dog is a grilled, steamed, or boiled sausage served in the slit of a partially sliced bun. The term hot dog can also refer to the sausage itself. The sausage used is a wiener or a frankfurter. Hot dog preparation and condiments vary worldwide.`);
-                  setMainArticle(`Artificial Intelligence has revolutionized the way we approach problem-solving in the modern era. Machine learning algorithms can now process vast amounts of data and identify patterns that would be impossible for humans to detect manually. Deep learning networks, inspired by the structure of the human brain, have achieved remarkable breakthroughs in image recognition, natural language processing, and predictive analytics.
-
-The applications of AI span across numerous industries, from healthcare and finance to transportation and entertainment. In healthcare, AI systems can analyze medical images to detect diseases earlier than traditional methods. Financial institutions use AI for fraud detection, risk assessment, and algorithmic trading. Autonomous vehicles rely on AI to navigate safely through complex traffic scenarios.
-
-However, the rapid advancement of AI also brings challenges and ethical considerations. Questions about job displacement, privacy concerns, and the need for transparent and explainable AI systems are at the forefront of current debates. As we continue to develop more sophisticated AI technologies, it becomes increasingly important to ensure they are developed and deployed responsibly.`);
+                  setText(sampleOriginalArticle);
+                  setMainArticle(sampleMainArticle);
                   setOtherArticles(`The quantum computing revolution is approaching rapidly. Quantum computers leverage the principles of quantum mechanics to perform calculations that are exponentially faster than classical computers for certain types of problems.
 
 Climate change represents one of the most pressing challenges of our time. Rising global temperatures, extreme weather events, and biodiversity loss are reshaping our planet's ecosystem.
@@ -366,19 +285,12 @@ The exploration of space has captured human imagination for centuries. Recent ad
               Visible text appears normal, hidden text is nearly invisible.
             </div>
           </div>
-        )}
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={
-              mode === 'mixed'
-                ? "Enter the text you want to hide within the articles above..."
-                : mode === 'markdown'
-                ? "Enter your markdown here...\n\n# Example\n**bold** *italic*\n- list item\n\nSupports Unicode: 中文 العربية 日本語 🌍"
-                : "Enter your text here...\n\nSupports Unicode characters from any language: 中文 العربية 日本語 🌍"
-            }
+            placeholder="Enter the text you want to hide within the articles above..."
             style={{
               flex: 1,
               padding: '15px',
@@ -469,7 +381,7 @@ The exploration of space has captured human imagination for centuries. Recent ad
           borderBottom: '2px solid #007bff',
           paddingBottom: '10px'
         }}>
-          PDF Preview {mode === 'mixed' && '(Text Hidden)'}
+          PDF Preview (Text Hidden)
         </h2>
 
         <div style={{
@@ -500,33 +412,25 @@ The exploration of space has captured human imagination for centuries. Recent ad
               fontSize: '18px'
             }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>
-                {mode === 'mixed' ? '�' : '�📄'}
+                �
               </div>
               <div>
-                {mode === 'mixed'
-                  ? 'Hidden text PDF preview will appear here'
-                  : 'PDF preview will appear here'
-                }
+                Hidden text PDF preview will appear here
               </div>
               <div style={{ fontSize: '14px', marginTop: '10px', color: '#999' }}>
-                {mode === 'mixed'
-                  ? 'Enter your text to hide, main article, and click "Preview PDF" or "Download PDF"'
-                  : `Enter ${mode === 'markdown' ? 'markdown' : 'text'} on the left and click "Preview PDF" or "Download PDF"`
-                }
+                Enter your text to hide, main article, and click "Preview PDF" or "Download PDF"
               </div>
-              {mode === 'mixed' && (
-                <div style={{
-                  fontSize: '12px',
-                  marginTop: '10px',
-                  color: '#777',
-                  fontStyle: 'italic',
-                  maxWidth: '400px',
-                  margin: '10px auto'
-                }}>
-                  Your original text will be mixed with the articles, appearing as normal text
-                  while the hidden portions are nearly invisible in the PDF.
-                </div>
-              )}
+              <div style={{
+                fontSize: '12px',
+                marginTop: '10px',
+                color: '#777',
+                fontStyle: 'italic',
+                maxWidth: '400px',
+                margin: '10px auto'
+              }}>
+                Your original text will be mixed with the articles, appearing as normal text
+                while the hidden portions are nearly invisible in the PDF.
+              </div>
             </div>
           )}
         </div>
