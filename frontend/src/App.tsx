@@ -3,6 +3,7 @@ import { sampleMainArticle, sampleOriginalArticle } from './sampleArticle';
 function App() {
   const [text, setText] = useState('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [mainArticle, setMainArticle] = useState('');
   const [otherArticles, setOtherArticles] = useState('');
   const [includeStatistics, setIncludeStatistics] = useState(false);
@@ -22,6 +23,7 @@ Climate change represents one of the most pressing challenges of our time. Risin
   }, [text, mainArticle]);
 
   const exportToPDF = async () => {
+    setGenerationStatus('loading');
     try {
       console.log('Sending mixed PDF request with:', {
         originalText: text,
@@ -62,6 +64,7 @@ Climate change represents one of the most pressing challenges of our time. Risin
 
         // Set the PDF URL for display
         setPdfUrl(url);
+        setGenerationStatus('success');
 
         // Also trigger download
         const a = document.createElement('a');
@@ -75,15 +78,20 @@ Climate change represents one of the most pressing challenges of our time. Risin
       } else {
         const errorText = await response.text();
         console.error('Response error:', errorText);
+        setPdfUrl(null);
+        setGenerationStatus('error');
         alert('Error generating PDF: ' + errorText);
       }
     } catch (error) {
       console.error('Error:', error);
+      setPdfUrl(null);
+      setGenerationStatus('error');
       alert('Error generating PDF: ' + (error as Error).message);
     }
   };
 
   const previewPDF = async () => {
+    setGenerationStatus('loading');
     try {
       console.log('Sending mixed PDF preview request with:', {
         originalText: text,
@@ -124,14 +132,19 @@ Climate change represents one of the most pressing challenges of our time. Risin
 
         // Set the PDF URL for display only (no download)
         setPdfUrl(url);
+        setGenerationStatus('success');
         console.log('PDF URL created:', url);
       } else {
         const errorText = await response.text();
         console.error('Response error:', errorText);
+        setPdfUrl(null);
+        setGenerationStatus('error');
         alert('Error generating PDF: ' + errorText);
       }
     } catch (error) {
       console.error('Error:', error);
+      setPdfUrl(null);
+      setGenerationStatus('error');
       alert('Error generating PDF: ' + (error as Error).message);
     }
   };
@@ -233,6 +246,7 @@ Climate change represents one of the most pressing challenges of our time. Risin
 
 The exploration of space has captured human imagination for centuries. Recent advances in rocket technology and space exploration have opened new possibilities for human settlement on other planets.`);
                   setIncludeStatistics(true);
+                  setGenerationStatus('idle');
                   setIncludeSpecialSequences(false);
                 }}
                 style={{
@@ -257,6 +271,7 @@ The exploration of space has captured human imagination for centuries. Recent ad
                   setOtherArticles('');
                   setIncludeStatistics(false);
                   setIncludeSpecialSequences(false);
+                  setGenerationStatus('idle');
                 }}
                 style={{
                   padding: '8px 16px',
@@ -354,13 +369,31 @@ The exploration of space has captured human imagination for centuries. Recent ad
               Download PDF
             </button>
 
-            {pdfUrl && (
+            {generationStatus === 'loading' && (
+              <span style={{
+                color: '#17a2b8',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                Generating PDF...
+              </span>
+            )}
+            {generationStatus === 'success' && (
               <span style={{
                 color: '#28a745',
                 fontSize: '14px',
                 fontWeight: 'bold'
               }}>
                 ✓ PDF Generated!
+              </span>
+            )}
+            {generationStatus === 'error' && (
+              <span style={{
+                color: '#dc3545',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}>
+                ✗ Failed to generate PDF
               </span>
             )}
           </div>
